@@ -3,13 +3,11 @@ package main
 import (
 	_ "embed"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/gonutz/w32"
 	"github.com/sqweek/dialog"
-	"github.com/tadvi/winc"
+	"github.com/jg1vpp/winc"
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 )
 
 var (
@@ -153,6 +151,7 @@ func wndOnClose(arg *winc.Event) {
 func makewindow() {
 	// --- Make Window
 	mainWindow = winc.NewForm(nil)
+
 	x, _ := strconv.Atoi(GetINI(winsize, "x"))
 	y, _ := strconv.Atoi(GetINI(winsize, "y"))
 	w, _ := strconv.Atoi(GetINI(winsize, "w"))
@@ -161,6 +160,7 @@ func makewindow() {
 		w = 520
 		h = 140
 	}
+
 	mainWindow.SetSize(w, h)
 	if x <= 0 || y <= 0 {
 		mainWindow.Center()
@@ -179,6 +179,7 @@ func makewindow() {
 	dock.Dock(esview.list, winc.Fill)
 
 	mainWindow.Show()
+
 	mainWindow.OnClose().Bind(wndOnClose)
 }
 
@@ -196,29 +197,24 @@ func UpdateLoop() {
 
 func init() {
 	OnLaunchEvent = onLaunchEvent
-	OnWindowEvent = onWindowEvent
+	winc.DllName = "infoEs"
 }
 
 func onLaunchEvent() {
-	hMenu1 := w32.HMENU(GetUI("MainForm.MainMenu"))
-	hMenu2 := w32.CreateMenu()
-	w32.AppendMenu(hMenu1, w32.MF_POPUP, uintptr(hMenu2), "Es情報")
-	w32.AppendMenu(hMenu2, w32.MF_STRING, 10001, "ウィンドウを開く")
-	w32.AppendMenu(hMenu2, w32.MF_STRING, 10002, "利用方法")
-	w32.DrawMenuBar(w32.HWND(GetUI("MainForm")))
-}
+	RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginEsInfoWindow"))`)
+	RunDelphi(`op.Put(MainMenu.FindComponent("PluginEsInfoWindow"), "Caption", "Es情報 ウィンドウ")`)
 
-func onWindowEvent(ptr uintptr) {
-	msg := (*w32.MSG)(unsafe.Pointer(ptr))
-	if msg.Message == w32.WM_COMMAND {
-		switch msg.WParam {
-		case 10001:
-			abort = make(chan struct{})
-			makewindow()
-			EsUpdate()
-			go UpdateLoop()
-		case 10002:
-			dialog.Message("%s", "このシステムはNICTのサイトから情報を取得しています。\n15分毎に自動更新しています。").Title("利用方法").Info()
-		}
-	}
+	RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginEsInfoHow"))`)
+	RunDelphi(`op.Put(MainMenu.FindComponent("PluginEsInfoHow"), "Caption", "Es情報 利用方法")`)
+
+	HandleButton("MainForm.MainMenu.PluginEsInfoWindow", func(num int){
+		abort = make(chan struct{})
+		makewindow()
+		EsUpdate()
+		go UpdateLoop()
+	})
+
+	HandleButton("MainForm.MainMenu.PluginEsInfoHow", func(num int){
+		dialog.Message("%s", "このシステムはNICTのサイトから情報を取得しています。\n15分毎に自動更新しています。").Title("利用方法").Info()
+	})	
 }
