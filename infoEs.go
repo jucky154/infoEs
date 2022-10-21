@@ -4,7 +4,8 @@ import (
 	_ "embed"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/sqweek/dialog"
-	"github.com/jg1vpp/winc"
+	"github.com/tadvi/winc"
+	"zylo/reiwa"
 	"strconv"
 	"strings"
 	"time"
@@ -78,7 +79,7 @@ func EsUpdate() {
 	//情報を取得
 	get_url_info, err := goquery.NewDocument("https://wdc.nict.go.jp/IONO/fxEs/latest-fxEs.html")
 	if err != nil {
-		DisplayToast(err.Error())
+		reiwa.DisplayToast(err.Error())
 	}
 
 	//必要なところだけ切り出し
@@ -140,22 +141,22 @@ var mainWindow *winc.Form
 func wndOnClose(arg *winc.Event) {
 	x, y := mainWindow.Pos()
 	w, h := mainWindow.Size()
-	SetINI(winsize, "x", strconv.Itoa(x))
-	SetINI(winsize, "y", strconv.Itoa(y))
-	SetINI(winsize, "w", strconv.Itoa(w))
-	SetINI(winsize, "h", strconv.Itoa(h))
+	reiwa.SetINI(winsize, "x", strconv.Itoa(x))
+	reiwa.SetINI(winsize, "y", strconv.Itoa(y))
+	reiwa.SetINI(winsize, "w", strconv.Itoa(w))
+	reiwa.SetINI(winsize, "h", strconv.Itoa(h))
 	abort <- struct{}{}
 	mainWindow.Close()
 }
 
 func makewindow() {
 	// --- Make Window
-	mainWindow = winc.NewForm(nil)
+	mainWindow = newForm(nil)
 
-	x, _ := strconv.Atoi(GetINI(winsize, "x"))
-	y, _ := strconv.Atoi(GetINI(winsize, "y"))
-	w, _ := strconv.Atoi(GetINI(winsize, "w"))
-	h, _ := strconv.Atoi(GetINI(winsize, "h"))
+	x, _ := strconv.Atoi(reiwa.GetINI(winsize, "x"))
+	y, _ := strconv.Atoi(reiwa.GetINI(winsize, "y"))
+	w, _ := strconv.Atoi(reiwa.GetINI(winsize, "w"))
+	h, _ := strconv.Atoi(reiwa.GetINI(winsize, "h"))
 	if w <= 0 || h <= 0 {
 		w = 520
 		h = 140
@@ -181,9 +182,11 @@ func makewindow() {
 	mainWindow.Show()
 
 	mainWindow.OnClose().Bind(wndOnClose)
+	return
 }
 
 func UpdateLoop() {
+	EsUpdate()
 	ticker := time.NewTicker(15 * time.Minute)
 	for {
 		select {
@@ -196,25 +199,24 @@ func UpdateLoop() {
 }
 
 func init() {
-	OnLaunchEvent = onLaunchEvent
-	winc.DllName = "infoEs"
+	reiwa.OnLaunchEvent = onLaunchEvent
+	reiwa.PluginName = "infoEs"
 }
 
 func onLaunchEvent() {
-	RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginEsInfoWindow"))`)
-	RunDelphi(`op.Put(MainMenu.FindComponent("PluginEsInfoWindow"), "Caption", "Es情報 ウィンドウ")`)
+	reiwa.RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginEsInfoWindow"))`)
+	reiwa.RunDelphi(`op.Put(MainMenu.FindComponent("PluginEsInfoWindow"), "Caption", "Es情報 ウィンドウ")`)
 
-	RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginEsInfoHow"))`)
-	RunDelphi(`op.Put(MainMenu.FindComponent("PluginEsInfoHow"), "Caption", "Es情報 利用方法")`)
+	reiwa.RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginEsInfoHow"))`)
+	reiwa.RunDelphi(`op.Put(MainMenu.FindComponent("PluginEsInfoHow"), "Caption", "Es情報 利用方法")`)
 
-	HandleButton("MainForm.MainMenu.PluginEsInfoWindow", func(num int){
+	reiwa.HandleButton("MainForm.MainMenu.PluginEsInfoWindow", func(num int){
 		abort = make(chan struct{})
 		makewindow()
-		EsUpdate()
 		go UpdateLoop()
 	})
 
-	HandleButton("MainForm.MainMenu.PluginEsInfoHow", func(num int){
+	reiwa.HandleButton("MainForm.MainMenu.PluginEsInfoHow", func(num int){
 		dialog.Message("%s", "このシステムはNICTのサイトから情報を取得しています。\n15分毎に自動更新しています。").Title("利用方法").Info()
 	})	
 }
