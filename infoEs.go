@@ -5,11 +5,11 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/sqweek/dialog"
 	"github.com/tadvi/winc"
-	"zylo/reiwa"
-	"zylo/win32"
 	"strconv"
 	"strings"
 	"time"
+	"zylo/reiwa"
+	"zylo/win32"
 )
 
 var (
@@ -211,13 +211,13 @@ func onLaunchEvent() {
 	reiwa.RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginEsInfoHow"))`)
 	reiwa.RunDelphi(`op.Put(MainMenu.FindComponent("PluginEsInfoHow"), "Caption", "Es情報 利用方法")`)
 
-	reiwa.HandleButton("MainForm.MainMenu.PluginEsInfoWindow", func(num int){
+	reiwa.HandleButton("MainForm.MainMenu.PluginEsInfoWindow", func(num int) {
 		abort = make(chan struct{})
 		makewindow()
 		go UpdateLoop()
 	})
 
-	reiwa.HandleButton("MainForm.MainMenu.PluginEsInfoHow", func(num int){
+	reiwa.HandleButton("MainForm.MainMenu.PluginEsInfoHow", func(num int) {
 		dialog.Message("%s", "このシステムはNICTのサイトから情報を取得しています。\n15分毎に自動更新しています。").Title("利用方法").Info()
-	})	
+	})
 }
