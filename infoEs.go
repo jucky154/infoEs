@@ -6,6 +6,7 @@ import (
 	"github.com/sqweek/dialog"
 	"github.com/tadvi/winc"
 	"zylo/reiwa"
+	"zylo/win32"
 	"strconv"
 	"strings"
 	"time"
@@ -151,7 +152,7 @@ func wndOnClose(arg *winc.Event) {
 
 func makewindow() {
 	// --- Make Window
-	mainWindow = newForm(nil)
+	mainWindow = win32.NewForm(nil)
 
 	x, _ := strconv.Atoi(reiwa.GetINI(winsize, "x"))
 	y, _ := strconv.Atoi(reiwa.GetINI(winsize, "y"))
